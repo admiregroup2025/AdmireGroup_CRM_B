@@ -10,7 +10,7 @@ const companySchema = new Schema({
   },
   industry: {
     type: String,
-    enum: ["manufacturing", "finance", "technology"],
+    enum: ["Manufacturing", "Finance", "Technology", "Healthcare", "Retail"],
     required: [true, "Industry is required"],
   },
   email: {
@@ -41,8 +41,8 @@ const companySchema = new Schema({
   },
   status: {
     type: String,
-    enum: ["active", "pending", "inactive"],
-    default: "pending",
+    enum: ["Active", "Pending", "Inactive"],
+    default: "Pending",
   },
 }, { timestamps: true });
 

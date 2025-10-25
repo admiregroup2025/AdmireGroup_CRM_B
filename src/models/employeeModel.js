@@ -1,8 +1,8 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const { Schema } = mongoose;
 
-const adminSchema = new Schema(
+const employeeSchema = new Schema(
   {
     fullName: {
       type: String,
@@ -17,6 +17,21 @@ const adminSchema = new Schema(
       trim: true,
       match: [/^\S+@\S+\.\S+$/, "Please provide a valid email address"],
     },
+    phone: {
+      type: String,
+      required: [true, "Phone number is required"],
+      match: [/^[0-9]{10}$/, "Phone number must be 10 digits"],
+    },
+    department: {
+      type: String,
+      required: [true, "Department is required"],
+      trim: true,
+    },
+    company: {
+      type: Schema.Types.ObjectId,
+      ref: "Company",
+      required: [true, "Company reference is required"],
+    },
     password: {
       type: String,
       required: [true, "Password is required"],
@@ -29,12 +44,12 @@ const adminSchema = new Schema(
     },
     role: {
       type: String,
-      default: "Admin",
-    },
+      default: "Employee",
+    }, 
   },
   { timestamps: true }
 );
 
-const Admin = mongoose.model("Admin", adminSchema);
+const Employee = mongoose.model('Employee', employeeSchema);
 
-export default Admin;
+export default Employee;

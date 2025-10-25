@@ -1,38 +1,75 @@
-const Admin  = require("../models/Adminmodel")
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
+import Admin from "../models/Adminmodel.js"; // Include .js extension
+import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 
-const register = async (req, res) => {
+// export const register = async (req, res) => {
+//   try {
+//     const { fName, lName, email, password , role } = req.body;
+//     if (!fName || !lName || !email || !password || !role) {
+//       return res.status(400).json({ message: "All fields are required" });
+//     }
+//     const duplicate = await Admin.findOne({ email });
+//     if (duplicate) {
+//       return res.status(400).json({ error: "Email is already exists" });
+//     }
+//     const hashPass = await bcrypt.hash(password, 10);
+//     const adminObj = {
+//       fName,
+//       lName,
+//       email,
+//       password: hashPass,
+//       role
+//     };
+//     const admin = new Admin(adminObj);
+//     await admin.save();
+//     if (admin) {
+//       return res.status(200).json({ message: "Admin Successfully Created" });
+//     }
+//   } catch (error) {
+//     res.status(500).json({ message: "Server Error" });
+//   }
+// };
+
+export const register = async (req, res) => {
   try {
-    const { fName, lName, email, password } = req.body;
-    if (!fName || !lName || !email || !password) {
+    const { fullName, email, password, role, accountActive } = req.body;
+
+    // Validate required fields
+    if (!fullName || !email || !password || !role) {
       return res.status(400).json({ message: "All fields are required" });
     }
+
+    // Check if email already exists
     const duplicate = await Admin.findOne({ email });
     if (duplicate) {
-      return res.status(400).json({ error: "Email is already exists" });
+      return res.status(400).json({ message: "Email already exists" });
     }
+
+    // Hash password
     const hashPass = await bcrypt.hash(password, 10);
+
+    // Create admin object
     const adminObj = {
-      fName,
-      lName,
+      fullName,
       email,
       password: hashPass,
+      role,
+      accountActive: accountActive !== undefined ? accountActive : true,
     };
+
     const admin = new Admin(adminObj);
     await admin.save();
-    if (admin) {
-      return res.status(200).json({ message: "Admin Successfully Created" });
-    }
+
+    return res.status(201).json({ message: "Admin successfully created", admin });
   } catch (error) {
-    res.status(500).json({ message: "Server Error" });
+    console.error("Error creating admin:", error);
+    return res.status(500).json({ message: "Server Error" });
   }
 };
 
 
 
-
-const getUser = async(req,res)=>{
+export const getUser = async(req,res)=>{
   try {
     const data = await Admin.find();
     if(!data){
@@ -47,52 +84,7 @@ const getUser = async(req,res)=>{
 }
 
 
-const login = async(req,res)=>{
-  try {
-    const {email , password} = req.body;
-    if(!email || !password){
-      return res.status(400).json({message:"Enter email and password"})
-    }
-    const admin = await Admin.findOne({email})
-
-    if(!email){
-      return res.status(400).json({message:"Email or password is mismatched"})
-    }
-    const isMatch = await bcrypt.compare(password , admin.password)
-
-    if(!isMatch){
-      return res.status(400).json({message:"Email or password is wrong "})
-    }
-    const accessToken = jwt.sign( {
-        id: admin._id,
-      },
-      process.env.JWT,
-      {
-        expiresIn: "15m",
-      })
-    //   const refreshToken = jwt.sign(
-    //   {
-    //     id: user._id,
-    //   },
-    //   process.env.REFRESH_JWT,
-    //   {
-    //     expiresIn: "1d",
-    //   }
-    // );
-    // res.cookie("jwt", refreshToken, {
-    //   httpOnly: true,
-    //   sameSite: "None",
-    //   secure: true,
-    //   maxAge: 24 * 60 * 60 * 1000,
-    // });
-      return res.json({accessToken})
-  } catch (error) {
-    console.log(error)
-    return res.status(500).json({message:"Server Error"})
-  }
-}
-
-const refresh = async (req, res) => {
+export const refresh = async (req, res) => {
   try {
     const { cookies } = req.body;
     if (!cookies) {
@@ -122,4 +114,3 @@ const refresh = async (req, res) => {
   }
 };
 
-module.exports = { register , getUser , login , refresh};
