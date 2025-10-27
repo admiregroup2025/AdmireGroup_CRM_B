@@ -101,7 +101,7 @@ export const refresh = async (req, res) => {
         }
         const findUser = await User.findOne({ id: decoded.id });
 
-        const accessToken = jwt.sign({ id: finddUser._id }, process.env.JWT, {
+        const accessToken = jwt.sign({ id: findUser._id }, process.env.JWT, {
           expiresIn: "15m",
         });
         res.json(accessToken);
@@ -113,4 +113,46 @@ export const refresh = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
+
+
+export const deleteAdmin = async (req, res) => {
+  try {
+    const { adminId } = req.params; 
+
+
+    const admin = await Admin.findByIdAndDelete(adminId);
+
+    if (!admin) {
+      return res.status(404).json({ msg: "Admin not found" });
+    }
+
+    return res.status(200).json({ msg: "Admin deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting admin:", error);
+    return res.status(500).json({ msg: "Internal server error" });
+  }
+};
+
+export const editAdmin = async (req, res) => {
+  try {
+    const { adminId } = req.params;
+    const updateData = req.body;
+
+    const admin = await Admin.findByIdAndUpdate(adminId, updateData, {
+      new: true, // return updated document
+      runValidators: true, // ensures validation rules in schema are applied
+    });
+
+    if (!admin) {
+      return res.status(404).json({ msg: "Admin not found" });
+    }
+
+    return res.status(200).json({
+      msg: "Admin updated successfully",
+      admin,
+    });
+  } catch (error) {
+  }
+};
+
 

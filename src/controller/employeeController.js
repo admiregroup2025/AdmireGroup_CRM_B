@@ -1,12 +1,29 @@
 // const Employee = require("../models/employeeModel");
-import Employee from '../models/employeeModel.js';
-import bcrypt from 'bcrypt';
-import mongoose from 'mongoose';
+import Employee from "../models/employeeModel.js";
+import bcrypt from "bcrypt";
+import mongoose from "mongoose";
 export const AddEmployee = async (req, res) => {
   try {
-    const { fullName, email, phone, password, department, company, account_active,role } = req.body;
+    const {
+      fullName,
+      email,
+      phone,
+      password,
+      department,
+      company,
+      account_active,
+      role,
+    } = req.body;
 
-    if (!fullName || !email || !company || !phone || !department || !password || !role) {
+    if (
+      !fullName ||
+      !email ||
+      !company ||
+      !phone ||
+      !department ||
+      !password ||
+      !role
+    ) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -33,7 +50,7 @@ export const AddEmployee = async (req, res) => {
       company,
       password: hashedPassword,
       accountActive: account_active ?? true,
-      role
+      role,
     });
 
     await newUser.save();
@@ -51,10 +68,11 @@ export const AddEmployee = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in AddEmployee:", error);
-    return res.status(500).json({ message: "Server error", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Server error", error: error.message });
   }
 };
-
 
 export const getAllEmployee = async (req, res) => {
   try {
@@ -65,7 +83,9 @@ export const getAllEmployee = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in getAllEmployee:", error);
-    return res.status(500).json({ message: "Server error", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Server error", error: error.message });
   }
 };
 
@@ -85,7 +105,30 @@ export const deleteEmployee = async (req, res) => {
     });
   } catch (error) {
     console.error("Error deleting employee:", error);
-    return res.status(500).json({ message: "Server error", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Server error", error: error.message });
+  }
+};
+
+export const editEmployee = async (req, res) => {
+  try {
+    const { employeeId } = req.params;
+    const updateData = req.body;
+
+    const employee = await Employee.findByIdAndUpdate(employeeId, updateData, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!employee) {
+      return res.status(404).json({ msg: "Employee not found" });
+    }
+
+    return res.status(200).json({ msg: "Employee updated successfully", employee });
+  } catch (error) {
+    console.error("Error updating employee:", error);
+    res.status(500).json({ msg: "Server error" });
   }
 };
 

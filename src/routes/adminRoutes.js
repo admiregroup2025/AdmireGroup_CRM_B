@@ -1,10 +1,13 @@
 import express from "express";
-import { register, getUser } from "../controller/adminController.js";
+import { register, getUser, deleteAdmin, editAdmin } from "../controller/adminController.js";
 
 const router = express.Router();
 
 router.route("/addAdmin").post(register);
 router.route("/getAdmin").get(getUser);
-// router.route("/login").post(login);
+
+router.route("/deleteAdmin/:adminId").delete(deleteAdmin);
+router.put("/editAdmin/:adminId", editAdmin);
+
 
 export default router;
