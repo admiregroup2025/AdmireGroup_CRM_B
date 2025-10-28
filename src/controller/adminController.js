@@ -32,10 +32,10 @@ import bcrypt from "bcrypt";
 
 export const register = async (req, res) => {
   try {
-    const { fullName, email, password, role, accountActive } = req.body;
+    const { fullName, email, password,phone, role, accountActive ,department , company } = req.body;
 
     // Validate required fields
-    if (!fullName || !email || !password || !role) {
+    if (!fullName || !email || !password || !role||!phone||!department||!company) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -54,6 +54,9 @@ export const register = async (req, res) => {
       email,
       password: hashPass,
       role,
+      department,
+      phone,
+      company,
       accountActive: accountActive !== undefined ? accountActive : true,
     };
 
@@ -133,6 +136,8 @@ export const deleteAdmin = async (req, res) => {
   }
 };
 
+
+
 export const editAdmin = async (req, res) => {
   try {
     const { adminId } = req.params;
@@ -156,3 +161,19 @@ export const editAdmin = async (req, res) => {
 };
 
 
+export const getAdmin  = async (req, res) => {
+  try {
+    const { adminId } = req.params;
+    const admin = await Admin.findById(adminId);
+    if (!admin) {
+      return res.status(404).json({ msg: "Admin not found" });
+    }
+    return res.status(200).json({
+      msg: "Admin fetched successfully",
+      admin,
+    });
+  } catch (error) {
+    console.error("Error fetching admin:", error);
+    return res.status(500).json({ msg: "Internal server error" });
+  }
+};  

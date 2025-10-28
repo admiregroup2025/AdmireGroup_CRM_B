@@ -24,6 +24,7 @@ const adminSchema = new Schema(
     },
     department: {
       type: String,
+      enum: ["Sales", "Marketing", "IT", "HR", "Admin"],
       required: [true, "Department is required"],
       trim: true,
     },

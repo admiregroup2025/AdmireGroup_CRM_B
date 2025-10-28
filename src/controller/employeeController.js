@@ -1,7 +1,9 @@
 // const Employee = require("../models/employeeModel");
-import Employee from "../models/employeeModel.js";
 import bcrypt from "bcrypt";
+import Employee from "../models/employeeModel.js";
+import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
+
 export const AddEmployee = async (req, res) => {
   try {
     const {
@@ -11,20 +13,32 @@ export const AddEmployee = async (req, res) => {
       password,
       department,
       company,
-      account_active,
       role,
     } = req.body;
 
+    // Set default values for optional fields
+    const accountActive = req.body.accountActive !== undefined ? req.body.accountActive : true;
+
+    // Validate required fields
     if (
       !fullName ||
       !email ||
-      !company ||
       !phone ||
       !department ||
-      !password ||
-      !role
+      !password
     ) {
-      return res.status(400).json({ message: "All fields are required" });
+      return res.status(400).json({ 
+        success: false,
+        message: "All fields are required" 
+      });
+    }
+
+    // Validate company ID format
+    if (!mongoose.Types.ObjectId.isValid(company)) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Invalid company ID format" 
+      });
     }
 
     // Check if user already exists
@@ -34,6 +48,7 @@ export const AddEmployee = async (req, res) => {
 
     if (existingUser) {
       return res.status(409).json({
+        success: false,
         message: "User already exists with this email or phone number",
       });
     }
@@ -49,8 +64,8 @@ export const AddEmployee = async (req, res) => {
       department,
       company,
       password: hashedPassword,
-      accountActive: account_active ?? true,
-      role,
+      accountActive,
+      role: role || "Employee",
     });
 
     await newUser.save();
@@ -132,3 +147,28 @@ export const editEmployee = async (req, res) => {
   }
 };
 
+export const getEmployee = async (req, res) => {
+  try {
+    const { empId } = req.params;
+
+    // Validate empId format
+    if (!empId) {
+      return res.status(400).json({ msg: "Employee ID is required" });
+    }
+
+    // Find employee by ID
+    const employee = await Employee.findById(empId);
+
+    if (!employee) {
+      return res.status(404).json({ msg: "Employee not found" });
+    }
+
+    return res.status(200).json({
+      msg: "Employee fetched successfully",
+      employee,
+    });
+  } catch (error) {
+    console.error("Error fetching employee:", error);
+    return res.status(500).json({ msg: "Internal server error" });
+  }
+};

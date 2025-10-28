@@ -13,6 +13,7 @@ import employeeRoutes from "./src/routes/employeeRoutes.js"; // ✅ Add .js exte
 import attendanceRoute from "./src/routes/attendanceRoute.js"; // ✅ Add .js extension
 import SuperAdminRoutes from "./src/routes/SuperAdminRoutes.js"; // ✅ Add .js extension
 import loginRoutes from "./src/routes/loginRoutes.js"
+import leadRoutes from "./src/routes/leadRoutes.js"
 import cors from "cors";
 import { corsOptions } from "./config/corsOptions.js"; // ✅ Add .js extension
 connectDB(); // ✅ Connect to MongoDB
@@ -22,6 +23,7 @@ app.use(cors(corsOptions));
 
 app.use("/", adminRoutes);
 app.use("/company", companyRoutes);
+app.use("/leads", leadRoutes);
 app.use("/employee", employeeRoutes);
 app.use("/attendance", attendanceRoute);
 app.use('/AddSuperAdmin', SuperAdminRoutes);
