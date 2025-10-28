@@ -1,6 +1,7 @@
 import Admin from "../models/Adminmodel.js"; // Include .js extension
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import Leave from "../models/LeaveModel.js";
 
 
 
@@ -91,6 +92,40 @@ export const refresh = async (req, res) => {
   }
 };
 
+
+export const getAllLeaveRequests = async (req, res) => {
+  try {
+    const leaves = await Leave.find()
+      .populate("employeeId", "fullName email")
+      .sort({ appliedAt: -1 });
+
+    res.status(200).json(leaves);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching leave requests", error: err.message });
+  }
+};
+
+export const updateLeaveStatus = async (req, res) => {
+  try {
+    const { leaveId } = req.params;
+    const { status, adminRemark } = req.body;
+    
+    if (!["Approved", "Rejected"].includes(status))
+      return res.status(400).json({ message: "Invalid status" });
+
+    const leave = await Leave.findByIdAndUpdate(
+      leaveId,
+      { status, adminRemark },
+      { new: true }
+    );
+
+    if (!leave) return res.status(404).json({ message: "Leave not found" });
+
+    res.status(200).json({ message: `Leave ${status.toLowerCase()} successfully`, leave });
+  } catch (err) {
+    res.status(500).json({ message: "Error updating leave", error: err.message });
+  }
+};
 
 export const deleteAdmin = async (req, res) => {
   try {
