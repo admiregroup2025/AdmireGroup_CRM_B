@@ -2,33 +2,7 @@ import Admin from "../models/Adminmodel.js"; // Include .js extension
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
-// export const register = async (req, res) => {
-//   try {
-//     const { fName, lName, email, password , role } = req.body;
-//     if (!fName || !lName || !email || !password || !role) {
-//       return res.status(400).json({ message: "All fields are required" });
-//     }
-//     const duplicate = await Admin.findOne({ email });
-//     if (duplicate) {
-//       return res.status(400).json({ error: "Email is already exists" });
-//     }
-//     const hashPass = await bcrypt.hash(password, 10);
-//     const adminObj = {
-//       fName,
-//       lName,
-//       email,
-//       password: hashPass,
-//       role
-//     };
-//     const admin = new Admin(adminObj);
-//     await admin.save();
-//     if (admin) {
-//       return res.status(200).json({ message: "Admin Successfully Created" });
-//     }
-//   } catch (error) {
-//     res.status(500).json({ message: "Server Error" });
-//   }
-// };
+
 
 export const register = async (req, res) => {
   try {
@@ -105,7 +79,7 @@ export const refresh = async (req, res) => {
         const findUser = await User.findOne({ id: decoded.id });
 
         const accessToken = jwt.sign({ id: findUser._id }, process.env.JWT, {
-          expiresIn: "15m",
+          expiresIn: "1m",
         });
         res.json(accessToken);
       } catch (error) {
