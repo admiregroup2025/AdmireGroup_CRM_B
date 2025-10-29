@@ -80,7 +80,7 @@ export const refresh = async (req, res) => {
         const findUser = await User.findOne({ id: decoded.id });
 
         const accessToken = jwt.sign({ id: findUser._id }, process.env.JWT, {
-          expiresIn: "1m",
+          expiresIn: "12h",
         });
         res.json(accessToken);
       } catch (error) {

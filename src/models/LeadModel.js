@@ -32,7 +32,7 @@ const leadSchema = new mongoose.Schema({
   },
   source: {
     type: String,
-    enum:['Cold Call'],
+    enum:['Cold Call','website','Referral','LinkedIn','Trade Show','Email Campaign','Social Media','Event','Organic Search','Paid Ads'],
     required: true
   },
   lastContact: {
