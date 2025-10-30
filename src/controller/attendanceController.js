@@ -146,3 +146,23 @@ export const getAttendanceForAllEmployee = async (req, res) => {
     return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+
+
+export const editAttendance = async (req, res) => {
+  try {
+    const { attendanceId } = req.params;
+    const updates = req.body;
+
+    const attendance = await Attendance.findByIdAndUpdate(attendanceId, updates, { new: true });
+
+    if (!attendance) {  
+      return res.status(404).json({ message: "Attendance record not found" });
+    }
+
+    return res.status(200).json({ message: "Attendance record updated successfully", attendance });
+  } catch (error) {
+    console.error("Error updating attendance record:", error);
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+};

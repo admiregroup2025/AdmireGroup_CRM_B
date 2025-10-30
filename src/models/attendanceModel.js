@@ -12,7 +12,12 @@ const attendanceSchema = new Schema(
     firstHalf: { type: String, enum: ["Present", "Absent"], default: "Absent" },
     secondHalf: { type: String, enum: ["Present", "Absent"], default: "Absent" },
     date: { type: Date, default: () => new Date().setHours(0, 0, 0, 0), required: true },
-  },
+//  department: {
+//       type: String,
+//       required: [true, "Department is required"],
+//       trim: true,
+//     }, 
+ },
   { timestamps: true }
 );
 

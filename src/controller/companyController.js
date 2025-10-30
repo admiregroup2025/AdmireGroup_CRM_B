@@ -99,6 +99,9 @@ export const getAllCompanies = async(req ,res )=>{
 }
 
 
+
+
+
 export const getCompanyById = async(req,res)=>{
     try {
         const {id }= req.params;
