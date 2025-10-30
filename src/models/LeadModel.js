@@ -16,6 +16,58 @@ const leadSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  whatsAppNo:{
+    type:String,
+    required:true,
+  },
+  departureCity:{
+    type:String,
+    required:true,
+  },
+  destination:{
+    required:true,
+    type:String,
+  },
+  expectedTravelDate:{
+    type:Date,
+    required:true
+  },
+  noOfDays:{
+    type:Number,
+    required:true,
+  },
+  placesToCover:{
+    type:String,
+    required:true,
+  },
+  noOfPerson:{
+    type:Number,
+    required:true
+  },
+  noOfChild:{
+    type:Number,
+    required:true,
+  },
+  childAge:{
+    type:String,
+    required:true
+  },
+  leadSource:{
+    type:String,
+    required:true,
+    // enum:['Meta','Instagram','Google','Just Dial']
+    enum:['Cold Call','Website','Referral','LinkedIn','Trade Show','Email Campaign','Social Media','Event','Organic Search','Paid Ads'],
+  },
+  leadType:{
+    type:String,
+    required:true,
+    enum:['International','Domestic']
+  },
+  tripType:{
+    type:String,
+    required:true,
+    enum:['Solo','Group','Family','Couple','Honeymoon']
+  },
   company: {
     type: String,
     required: true,
@@ -30,11 +82,10 @@ const leadSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  source: {
-    type: String,
-    enum:['Cold Call','website','Referral','LinkedIn','Trade Show','Email Campaign','Social Media','Event','Organic Search','Paid Ads'],
-    required: true
-  },
+ groupNumber:{
+  type:String,
+  require:false
+ },
   lastContact: {
     type: Date,
     default: Date.now

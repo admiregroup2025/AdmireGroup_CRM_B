@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const { Schema } = mongoose;
 
@@ -45,11 +45,28 @@ const employeeSchema = new Schema(
     role: {
       type: String,
       default: "Employee",
-    }, 
+    },
+
+    // --- Attendance Stats ---
+    totalLateDays: {
+      type: Number,
+      default: 0,
+    },
+    totalLateMinutes: {
+      type: Number,
+      default: 0,
+    },
+    lateCount: {
+      type: Number,
+      default: 0,
+    },
+    halfDays: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );
 
-const Employee = mongoose.model('Employee', employeeSchema);
-
+const Employee = mongoose.model("Employee", employeeSchema);
 export default Employee;

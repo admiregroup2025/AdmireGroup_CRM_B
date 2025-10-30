@@ -1,4 +1,4 @@
-import Lead from '../models/leadModel.js';
+import Lead from "../models/LeadModel.js"
 
 // Get all leads
 export const getAllLeads = async (req, res) => {

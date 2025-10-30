@@ -15,6 +15,7 @@ import SuperAdminRoutes from "./src/routes/SuperAdminRoutes.js"; // ✅ Add .js 
 import loginRoutes from "./src/routes/loginRoutes.js"
 import leadRoutes from "./src/routes/leadRoutes.js"
 import cors from "cors";
+import "./src/utils/scheduleJob.js"
 import { corsOptions } from "./config/corsOptions.js"; // ✅ Add .js extension
 connectDB(); // ✅ Connect to MongoDB
 

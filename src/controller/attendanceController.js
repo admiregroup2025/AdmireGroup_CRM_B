@@ -1,153 +1,189 @@
+import { response } from "express";
 import Attendance from "../models/attendanceModel.js";
 import Employee from "../models/employeeModel.js";
+import moment from "moment-timezone";
 
-// Helper: get start and end of today (UTC-safe)
+  
+/* -------------------------------------------------------------------------- */
+/* 🕒 UTILITIES */
+/* -------------------------------------------------------------------------- */
+
+// Get today's start and end time (UTC-safe)
 const getTodayRange = () => {
   const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-  const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-  return { todayStart, todayEnd };
+  const start = new Date(
+    Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0)
+  );
+  const end = new Date(
+    Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59)
+  );
+  return { start, end };
 };
 
-// Clock-In Function
+// Calculate difference in minutes
+const diffInMinutes = (later, earlier) =>
+  Math.floor((later - earlier) / (1000 * 60));
+
+/* -------------------------------------------------------------------------- */
+/* ✅ CLOCK-IN FUNCTION */
+/* -------------------------------------------------------------------------- */
 export const clockIn = async (req, res) => {
   try {
     const { employeeId, companyId } = req.body;
-
-    if (!employeeId || !companyId) {
-      return res.status(400).json({ message: "Employee and Company are required" });
-    }
+    if (!employeeId || !companyId)
+      return res.status(400).json({ message: "Employee and company are required." });
 
     const employee = await Employee.findById(employeeId);
-    if (!employee) return res.status(404).json({ message: "Employee not found" });
+    if (!employee) return res.status(404).json({ message: "Employee not found." });
 
-    // Get today's start & end
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);
+    const { start, end } = getTodayRange();
 
-    // Check if attendance already exists for this employee + company today
-    const existing = await Attendance.findOne({
+    // Check if already clocked in today
+    const existingRecord = await Attendance.findOne({
       employee: employeeId,
       company: companyId,
-      date: { $gte: todayStart, $lte: todayEnd },
+      date: { $gte: start, $lte: end },
     });
+    if (existingRecord)
+      return res.status(400).json({ message: "Already clocked in for today." });
 
-    if (existing) {
+    // ✅ Always use IST-based time for logic
+    const now = moment().tz("Asia/Kolkata").toDate();
+
+    // Shift boundaries (IST)
+    const shiftStart = moment.tz("10:00", "HH:mm", "Asia/Kolkata").toDate();
+    const graceEnd = moment.tz("10:15", "HH:mm", "Asia/Kolkata").toDate();
+    const lateEnd = moment.tz("12:00", "HH:mm", "Asia/Kolkata").toDate();
+    const halfDayEnd = moment.tz("14:00", "HH:mm", "Asia/Kolkata").toDate();
+
+    if (now > halfDayEnd) {
       return res.status(400).json({
-        message: "You have already clocked in today for this company.",
+        message: "Clock-in not allowed after 2:00 PM. Please contact admin.",
       });
     }
-
-    const now = new Date();
-    const shiftStart = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      10, 0, 0, 0 // 10:00 AM shift start
-    );
-
-    const diffMins = (now - shiftStart) / 1000 / 60;
 
     let status = "Present";
     let firstHalf = "Present";
     let secondHalf = "Present";
+    let remarks = "";
+    let lateMinutes = 0;
+    let isLate = false;
 
-    if (diffMins > 15 && diffMins <= 180) {
+    // Attendance logic
+    if (now < shiftStart) {
+      status = "Present";
+      remarks = "On time (Present)";
+    } else if (now >= shiftStart && now <= graceEnd) {
+      status = "Grace Present";
+      remarks = "Within grace period (Present)";
+    } else if (now > graceEnd && now <= lateEnd) {
       status = "Late";
-      firstHalf = "Absent";
-    } else if (diffMins > 180 && diffMins <= 300) {
+      isLate = true;
+      lateMinutes = diffInMinutes(now, shiftStart);
+      remarks = `Late by ${lateMinutes} minutes (Still Present)`;
+    } else if (now > lateEnd && now <= halfDayEnd) {
       status = "Half Day";
       firstHalf = "Absent";
-    } else if (diffMins > 300) {
-      status = "Absent";
-      firstHalf = "Absent";
-      secondHalf = "Absent";
+      remarks = "Clocked in between 12:00–2:00 PM (Half Day)";
     }
 
     const attendance = new Attendance({
       employee: employeeId,
       company: companyId,
       clockIn: now,
-      date: todayStart,
+      date: start,
       status,
       firstHalf,
       secondHalf,
+      lateMinutes,
+      isLate,
+      remarks,
     });
 
     await attendance.save();
-
-    res.status(201).json({ message: "Clock-in recorded successfully", attendance });
-  } catch (err) {
-    console.error("Error in clockIn:", err);
-    res.status(500).json({ message: "Server error", error: err.message });
+    return res.status(201).json({ message: "Clock-in recorded successfully", attendance });
+  } catch (error) {
+    console.error("❌ Error in clockIn:", error);
+    return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
 
-// Clock-Out Function
+/* -------------------------------------------------------------------------- */
+/* ✅ CLOCK-OUT FUNCTION */
+/* -------------------------------------------------------------------------- */
 export const clockOut = async (req, res) => {
   try {
     const { employeeId, companyId } = req.body;
+    if (!employeeId || !companyId)
+      return res.status(400).json({ message: "Employee and company are required." });
 
-    if (!employeeId || !companyId) {
-      return res.status(400).json({ message: "Employee and Company are required" });
-    }
-
-    const { todayStart, todayEnd } = getTodayRange();
-
-    // Include company in query
+    const { start, end } = getTodayRange();
     const attendance = await Attendance.findOne({
       employee: employeeId,
       company: companyId,
-      date: { $gte: todayStart, $lte: todayEnd },
-    }).sort({ clockIn: -1 });
+      date: { $gte: start, $lte: end },
+    });
+    if (!attendance)
+      return res.status(404).json({ message: "No clock-in record found for today." });
+    if (attendance.clockOut)
+      return res.status(400).json({ message: "Already clocked out today." });
 
-    if (!attendance) {
-      return res.status(404).json({ message: "No clock-in found for today" });
-    }
-
-    if (attendance.clockOut) {
-      return res.status(400).json({ message: "Already clocked out today" });
-    }
-
-    const now = new Date();
+    // ✅ IST-safe time
+    const now = moment().tz("Asia/Kolkata").toDate();
     attendance.clockOut = now;
 
-    const shiftMid = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0, 0, 0);
+    const workedHours = ((now - attendance.clockIn) / (1000 * 60 * 60)).toFixed(2);
+    attendance.workedHours = parseFloat(workedHours);
+
+    const shiftMid = moment.tz("13:00", "HH:mm", "Asia/Kolkata").toDate();
     if (attendance.firstHalf === "Absent" && now >= shiftMid) {
       attendance.secondHalf = "Present";
     }
 
-    await attendance.save();
+    const MIN_HOURS_FOR_HALF_DAY = 3;
+    const MIN_HOURS_FOR_FULL_DAY = 7;
 
-    return res.status(200).json({
-      message: "Clock-out recorded successfully",
-      attendance,
-    });
+    if (attendance.workedHours < MIN_HOURS_FOR_HALF_DAY) {
+      attendance.status = "Absent";
+      attendance.firstHalf = "Absent";
+      attendance.secondHalf = "Absent";
+      attendance.remarks = `Worked ${attendance.workedHours} hrs — Absent`;
+    } else if (attendance.workedHours < MIN_HOURS_FOR_FULL_DAY) {
+      attendance.status = "Half Day";
+      attendance.remarks = `Worked ${attendance.workedHours} hrs — Half Day`;
+    } else {
+      attendance.status = "Present";
+      attendance.remarks = `Worked ${attendance.workedHours} hrs — Full Day`;
+    }
+
+    await attendance.save();
+    return res.status(200).json({ message: "Clock-out recorded successfully", attendance });
   } catch (error) {
-    console.error("Error in ClockOut:", error.stack);
+    console.error("❌ Error in clockOut:", error);
     return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
 
-// Get attendance for all employees (optionally restrict by company or role)
+/* -------------------------------------------------------------------------- */
+/* ✅ GET ALL ATTENDANCE RECORDS */
+/* -------------------------------------------------------------------------- */
 export const getAttendanceForAllEmployee = async (req, res) => {
   try {
     const attendanceRecords = await Attendance.find()
-      .populate("employee", "fullName email") // Adjust per your schema fields
-      .populate("company", "name");
+      .populate("employee", "fullName email role")
+      .populate("company", "name")
+      .sort({ date: -1 });
 
     return res.status(200).json(attendanceRecords);
   } catch (error) {
-    console.error("Error fetching attendance records:", error);
-    return res.status(500).json({ message: "Server error", error: error.message });
+    console.error("❌ Error fetching attendance records:", error);
+    return res
+      .status(500)
+      .json({ message: "Server error", error: error.message });
   }
 };
-
-
 
 export const editAttendance = async (req, res) => {
   try {
@@ -164,5 +200,35 @@ export const editAttendance = async (req, res) => {
   } catch (error) {
     console.error("Error updating attendance record:", error);
     return res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// export const getAttendanceById = async (req,res) =>{
+//   try {
+//     const {id} = req.params;
+//     const attendanceId = await Attendance.findById(id)
+//     if(!attendanceId){
+//       return res.status(400).json({message: "Id not Found"})
+//     }
+//     return res.status(200).json({message:"Attence Found"},attendanceId)
+//   } catch (error) {
+//     return res.status(500).json({message :"Server Error",error:error.message})
+//   }
+// }
+
+export const getAttendanceByEmployeeId = async (req, res) => {
+  try {
+    const { employeeId } = req.params;
+
+    // Find all attendance records for this employee
+    const attendanceRecords = await Attendance.find({ employee: employeeId }).populate("employee");
+
+    if (!attendanceRecords || attendanceRecords.length === 0) {
+      return res.status(404).json({ message: "No attendance records found for this employee" });
+    }
+
+    return res.status(200).json({ message: "Attendance found", data: attendanceRecords });
+  } catch (error) {
+    return res.status(500).json({ message: "Server Error", error: error.message });
   }
 };
