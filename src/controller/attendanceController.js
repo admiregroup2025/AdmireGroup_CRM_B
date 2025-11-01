@@ -172,7 +172,7 @@ export const clockOut = async (req, res) => {
 export const getAttendanceForAllEmployee = async (req, res) => {
   try {
     const attendanceRecords = await Attendance.find()
-      .populate("employee", "fullName email role")
+      .populate("employee", "fullName email role department")
       .populate("company", "name")
       .sort({ date: -1 });
 
@@ -185,36 +185,34 @@ export const getAttendanceForAllEmployee = async (req, res) => {
   }
 };
 
+
+
 export const editAttendance = async (req, res) => {
   try {
     const { attendanceId } = req.params;
     const updates = req.body;
 
-    const attendance = await Attendance.findByIdAndUpdate(attendanceId, updates, { new: true });
+    // ❌ Don't re-wrap as new Date() — frontend already sent UTC ISO
+    // ✅ Just store directly
+    const attendance = await Attendance.findByIdAndUpdate(attendanceId, updates, {
+      new: true,
+      runValidators: true,
+    });
 
-    if (!attendance) {  
+    if (!attendance) {
       return res.status(404).json({ message: "Attendance record not found" });
     }
 
-    return res.status(200).json({ message: "Attendance record updated successfully", attendance });
+    return res.status(200).json({
+      message: "Attendance record updated successfully",
+      attendance,
+    });
   } catch (error) {
     console.error("Error updating attendance record:", error);
     return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-// export const getAttendanceById = async (req,res) =>{
-//   try {
-//     const {id} = req.params;
-//     const attendanceId = await Attendance.findById(id)
-//     if(!attendanceId){
-//       return res.status(400).json({message: "Id not Found"})
-//     }
-//     return res.status(200).json({message:"Attence Found"},attendanceId)
-//   } catch (error) {
-//     return res.status(500).json({message :"Server Error",error:error.message})
-//   }
-// }
 
 export const getAttendanceByEmployeeId = async (req, res) => {
   try {

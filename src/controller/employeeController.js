@@ -237,9 +237,17 @@ export const getMyLeaves = async (req, res) => {
   try {
     const { employeeId } = req.params;
 
+    // 🟢 FIXED: use "companyId" not "company"
     const leaves = await Leave.find({ employeeId })
-      .populate("company", "name")
+      .populate("companyId", "name") // ✅ Correct field name
       .sort({ appliedAt: -1 });
+
+    if (!leaves || leaves.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No leaves found for this employee",
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -247,7 +255,11 @@ export const getMyLeaves = async (req, res) => {
       leaves,
     });
   } catch (error) {
-    console.error("Error fetching leaves:", error);
-    res.status(500).json({ message: "Error fetching leaves", error: error.message });
+    console.error("❌ Error fetching leaves:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching leaves",
+      error: error.message,
+    });
   }
 };

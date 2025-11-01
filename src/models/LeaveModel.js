@@ -1,3 +1,5 @@
+
+
 import mongoose from "mongoose";
 
 const LeaveSchema = new mongoose.Schema({
@@ -8,7 +10,7 @@ const LeaveSchema = new mongoose.Schema({
   },
   companyId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Company", // optional if you have multi-company setup
+    ref: "Company",
   },
   leaveType: {
     type: String,
@@ -41,4 +43,6 @@ const LeaveSchema = new mongoose.Schema({
   },
 });
 
-export default mongoose.model("Leave", LeaveSchema);
+// ✅ Export the model
+const Leave = mongoose.model("Leave", LeaveSchema);
+export default Leave;

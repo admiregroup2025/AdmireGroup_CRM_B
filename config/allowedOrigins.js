@@ -6,5 +6,7 @@ export const allowedOrigins = [
   "http://localhost:3001",
   "http://192.168.1.13:5173",
   "http://127.0.0.1:5173",
-  "http://localhost:5000"
+  "http://localhost:5000",
+  "http://api.admiresoftech.online",
+  "https://admiresoftech.online"
 ];

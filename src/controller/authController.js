@@ -68,8 +68,8 @@ export const loginUser = async (req, res) => {
     const payload = { id: user._id, role };
 
     // Add companyId only for employees
-    if (role === "employee") {
-      payload.companyId = user.company;  // assuming company field exists in Employee model
+    if (role === "employee" || role ==="admin") {
+      payload.companyId = user.company; // assuming company field exists in Employee model
     }
 
     const token = jwt.sign(payload, process.env.JWT, { expiresIn: "1d" });
@@ -82,7 +82,7 @@ export const loginUser = async (req, res) => {
       role,
     };
 
-    if (role === "employee") {
+    if (role === "employee" || role==="admin") {
       userResponse.companyId = user.company;
     }
 
